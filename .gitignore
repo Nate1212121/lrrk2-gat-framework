@@ -2,4 +2,4 @@
 Thumbs.db
 .env
 venv/
-data/*.txt
+data/
