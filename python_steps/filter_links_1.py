@@ -1,9 +1,10 @@
 import os
 import pandas as pd
 
+print("Step 1: Filtering STRING links to make protein id list (nodes list) and edge list")
 print("Step 1.1: Initializing")
 
-#checking directory
+#checking terminal directory
 print("CWD:",os.getcwd())
 print("__file__:",__file__)
 
@@ -18,7 +19,7 @@ os.makedirs(data_dir,exist_ok=True)
 os.makedirs(new_data_dir,exist_ok=True)
 #just checking the directories are there and also add more robustness
 
-#DATA FILES
+#DATA/INPUT FILES
 string_link_file=os.path.join(data_dir,'9606.protein.links.v12.0.txt')
 string_info_file=os.path.join(data_dir,'9606.protein.info.v12.0.txt') #translates kegg's gene names to string's homo sapien
 #protein ids (9606.ENSP...) in this script as it contains both of those in its columns. the bridge for file intersection.
@@ -65,10 +66,12 @@ edge_df.to_csv(edge_output_file,index=False)
 print("Edge list:",edge_output_file)
 
 print("\nStep 1.7: Making protein_ids.txt")
+#this is the list of unique nodes
 
-unique_proteins_output_file=os.path.join(new_data_dir,'protein_ids.txt')
-unique_proteins=pd.concat([edge_df['protein1'],edge_df['protein2']]).unique()
-unique_proteins_df=pd.DataFrame(unique_proteins,columns=['protein_id'])
-unique_proteins_df.to_csv(unique_proteins_output_file,index=False)
+node_output_file=os.path.join(new_data_dir,'protein_ids.txt')
+node=pd.concat([edge_df['protein1'],edge_df['protein2']]).unique()
+node_df=pd.DataFrame(node,columns=['protein_id'])
+node_df.to_csv(node_output_file,index=False)
 
-print("Unique protein ids:",unique_proteins_output_file)
+print("Unique protein ids:",node_output_file)
+print("Unique protein id count:",len(node_df)-1) #excluding header row
