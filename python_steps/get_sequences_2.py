@@ -14,6 +14,7 @@ print("__file__:",__file__)
 data_dir='./data/'
 new_data_dir='./new_data/'
 
+#INPUT FILES
 nodes_file=os.path.join(new_data_dir,'protein_ids.txt')
 string_sequence_file=os.path.join(data_dir,'9606.protein.sequences.v12.0.fa')
 
@@ -32,7 +33,7 @@ current_sequence=[]
 
 with open(string_sequence_file,'r') as f:
     for line in f:
-        if line.startswith('>'):
+        if line.startswith('>'): #they all start with >
             if current_id and current_id in node_list:
                 string_sequence_map[current_id]=''.join(current_sequence)
             header_id=line.strip()[1:]
