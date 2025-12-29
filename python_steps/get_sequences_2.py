@@ -38,9 +38,9 @@ with open(string_sequence_file,'r') as f:
                 string_sequence_map[current_id]=''.join(current_sequence)
             header_id=line.strip()[1:]
             current_id=header_id
-        current_sequence=[]
-    else:
-        current_sequence.append(line.strip())
+            current_sequence=[]
+        else:
+            current_sequence.append(line.strip())
 
 if current_id and current_id in node_list:
     string_sequence_map[current_id]=''.join(current_sequence) # updating map for last protein id

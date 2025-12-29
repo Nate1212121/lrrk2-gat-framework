@@ -3,3 +3,4 @@ Thumbs.db
 .env
 venv/
 data/
+new_data/*.pt
