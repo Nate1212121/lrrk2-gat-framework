@@ -77,4 +77,6 @@ if __name__=='__main__':
     print("Normal protein embeddings saved to:",output_embeddings_file)
 
 
-#finished running, run time took less than 2 mins
+#finished running, run time took less than 2 mins. --  NEVERMIND
+#SECOND COMMIT FOR THIS FILE, THE REASON WHY IT TOOK LESS THAN TWO MINUTES WAS BECAUSE THE KEYS WERNT EVEN ADDED TO THE DICTIONARY/MAP
+#i knew there was something wrong with only 2 minutes of run time
