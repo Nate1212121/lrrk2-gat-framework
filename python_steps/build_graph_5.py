@@ -44,7 +44,7 @@ if __name__=="__main__":
 
     print("\nStep 5.5: Building Feature Matrix X (Node Features)")
 
-    x=torch.zeros((len(sorted_proteins),1280),dtype=torch.float) #1280 is the size of the vector
+    x=torch.zeros((len(sorted_proteins),2560),dtype=torch.float) #2560 is the size of the vector for 3B model
     for protein_id,index in protein_to_index.items():
         x[index]=normal_embeddings[protein_id]
 

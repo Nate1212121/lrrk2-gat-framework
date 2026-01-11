@@ -23,7 +23,7 @@ new_data_dir='./new_data/'
 nodes_file=os.path.join(new_data_dir,'protein_ids.txt')
 sequences_file=os.path.join(new_data_dir,'protein_sequences.json')
 
-esm2_model='facebook/esm2_t33_650M_UR50D' #ESM2 model name
+esm2_model='facebook/esm2_t36_3B_UR50D' #ESM2 model name
 
 print("\nStep 3.2: Loading protein sequences")
 
