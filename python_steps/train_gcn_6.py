@@ -7,7 +7,7 @@ from torch_geometric.transforms import RandomLinkSplit
 import numpy as np
 from sklearn.metrics import roc_auc_score
 
-print("Step 6: Training 1-layer GCN")
+print("Step 6: Training 2-layer GCN")
 
 print("\nStep 6.1: Initializing")
 
@@ -19,16 +19,21 @@ new_data_dir='./new_data/'
 models_dir='./models/'
 
 graph_file=os.path.join(new_data_dir, 'ppi_pd_graph.pt')
-model_output_file=os.path.join(models_dir, 'gcn_v1.pt')
+model_output_file=os.path.join(models_dir, 'gcn_v2.pt')
 
 #variable variables
 #epochs=50 
 epochs=100
 #epochs=500 
 
-#learning_rate=0.001
-learning_rate=0.01
+learning_rate=0.001
+# learning_rate=0.005
+# learning_rate=0.01
 #learning_rate=0.1
+
+# hidden_channels_one=128
+hidden_channels_one=256
+# hidden_channels_one=512
 
 #out_channels=32
 out_channels=64
@@ -42,13 +47,15 @@ print("Out channel count:",out_channels)
 
 class link_predictor(torch.nn.Module):
     #message passer function (structure of the layers)
-    def __init__(self,in_channels, out_channels):
+    def __init__(self,in_channels, hidden_channels_one,out_channels):
         super().__init__()
-        self.conv1=GCNConv(in_channels, out_channels)
+        self.conv1=GCNConv(in_channels, hidden_channels_one)
+        self.conv2=GCNConv(hidden_channels_one,out_channels)#second layer
 
     #encoder (performing the message passing)
     def encode(self,x,edge_index):
         x=self.conv1(x,edge_index).relu() #passing through layer and adding non-linearity with relu
+        x=self.conv2(x,edge_index).relu()
         return x
 
     #decoder
@@ -104,15 +111,15 @@ if __name__ == '__main__':
 
     model=link_predictor(
         in_channels=graph_data.num_features,
+        hidden_channels_one=hidden_channels_one,
         out_channels=out_channels
     ).to(device)
 
     optimizer=torch.optim.Adam(params=model.parameters(),lr=learning_rate)
     criterion=torch.nn.BCEWithLogitsLoss()
 
+    print("\nStep 6.4: Training and testing model (going through epochs)")
     highest_auc=0
-    print("\nStep 6.4: Training and testing model")
-    
     for i in range(1,epochs+1):
         loss=train(model, train_data.to(device),optimizer,criterion)
         auc=test(model,val_data.to(device))
@@ -133,5 +140,5 @@ if __name__ == '__main__':
     model.load_state_dict(torch.load(model_output_file, weights_only=True))
     final_auc=test(model, test_data.to(device))
     
-    print("AUC for final test dataset:",final_auc)
-    print("Model file saved in:", model_output_file)
+    print("\nAUC for final test dataset:",final_auc)
+    print("\nModel file saved in:", model_output_file)
