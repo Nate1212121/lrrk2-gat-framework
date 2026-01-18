@@ -7,7 +7,7 @@ from torch_geometric.transforms import RandomLinkSplit
 import numpy as np
 from sklearn.metrics import roc_auc_score
 
-print("Step 6: Training 2-layer GCN")
+print("Step 6 v3: Training 1-layer GCN with 2 MLP layers")
 
 print("\nStep 6.1: Initializing")
 
@@ -19,7 +19,7 @@ new_data_dir='./new_data/'
 models_dir='./models/'
 
 graph_file=os.path.join(new_data_dir, 'ppi_pd_graph.pt')
-model_output_file=os.path.join(models_dir, 'gcn_v2.pt')
+model_output_file=os.path.join(models_dir, 'gcn_v3.pt')
 
 #variable variables
 #epochs=50 
@@ -31,8 +31,8 @@ learning_rate=0.001
 # learning_rate=0.01
 #learning_rate=0.1
 
-# hidden_channels_one=128
-hidden_channels_one=256
+hidden_channels_one=128
+# hidden_channels_one=256
 # hidden_channels_one=512
 
 #out_channels=32
@@ -50,12 +50,14 @@ class link_predictor(torch.nn.Module):
     def __init__(self,in_channels, hidden_channels_one,out_channels):
         super().__init__()
         self.conv1=GCNConv(in_channels, hidden_channels_one)
-        self.conv2=GCNConv(hidden_channels_one,out_channels)#second layer
+        self.mlp1=torch.nn.Linear(hidden_channels_one, hidden_channels_one)
+        self.mlp2=torch.nn.Linear(hidden_channels_one, out_channels)
 
     #encoder (performing the message passing)
     def encode(self,x,edge_index):
         x=self.conv1(x,edge_index).relu() #passing through layer and adding non-linearity with relu
-        x=self.conv2(x,edge_index).relu()
+        x=self.mlp1(x).relu()
+        x=self.mlp2(x)
         return x
 
     #decoder
