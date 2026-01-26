@@ -8,8 +8,9 @@ from torch_geometric.transforms import RandomLinkSplit
 import numpy as np
 from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
+from torch_geometric.nn import GATv2Conv
 
-print("Step 7: Running GCNs and finding differences in normal vs mutant LRRK2")
+print("Step 7: Running GAT and finding differences in normal vs mutant LRRK2")
 
 print("\nStep 7.1: Initializing")
 
@@ -27,8 +28,9 @@ graph_file=os.path.join(new_data_dir, 'ppi_pd_graph.pt')
 gcn_v1_file=os.path.join(models_dir, 'gcn_v1.pt')
 gcn_v2_file=os.path.join(models_dir, 'gcn_v2.pt')
 gcn_v3_file=os.path.join(models_dir, 'gcn_v3.pt')
+gat_v4_file=os.path.join(models_dir, 'gat_v4.pt')
 mutant_embedding_file=os.path.join(new_data_dir, 'g2019s_protein_embedding.pt')
-results_output_file=os.path.join(results_dir, 'v3_link_prediction_results.csv')
+results_output_file=os.path.join(results_dir, 'v4_link_prediction_results.csv')
 
 hidden_channels_one=128
 # hidden_channels_one=256
@@ -39,23 +41,26 @@ out_channels=64
 #out_channels=128
 #out_channels=512
 
+heads=8
+
+
 class link_predictor(torch.nn.Module):
     #message passer function (structure of the layers)
-    def __init__(self,in_channels, hidden_channels_one,out_channels):
+    def __init__(self,in_channels, hidden_channels_one,out_channels,heads):
         super().__init__()
-        self.conv1=GCNConv(in_channels, hidden_channels_one)
-        self.mlp1=torch.nn.Linear(hidden_channels_one, hidden_channels_one)
+        self.gat1=GATv2Conv(in_channels, hidden_channels_one, heads=heads)
+        self.mlp1=torch.nn.Linear(hidden_channels_one*heads, hidden_channels_one)
         self.mlp2=torch.nn.Linear(hidden_channels_one, out_channels)
 
     #encoder (performing the message passing)
     def encode(self,x,edge_index):
-        x=self.conv1(x,edge_index).relu() #passing through layer and adding non-linearity with relu
+        x=self.gat1(x,edge_index).relu() #passing through layer and adding non-linearity with relu
         x=self.mlp1(x).relu()
         x=self.mlp2(x)
         return x
 
     #decoder
-    def decode(self, z,edge_label_index): #dot product (often used for ppi link predictions)
+    def decode(self, z,edge_label_index): #dot product for ppi link predictions
         return (z[edge_label_index[0]] * z[edge_label_index[1]]).sum(dim=1) 
 
 if __name__=="__main__":
@@ -71,10 +76,11 @@ if __name__=="__main__":
     model=link_predictor(
         in_channels=graph_data.num_features,
         hidden_channels_one=hidden_channels_one,
-        out_channels=out_channels
+        out_channels=out_channels,
+        heads=heads
     ).to(device)
 
-    model.load_state_dict(torch.load(gcn_v3_file,map_location=device))
+    model.load_state_dict(torch.load(gat_v4_file,map_location=device))
     model.eval()
 
     lrrk2_idx=graph_data.protein_to_index['9606.ENSP00000298910']
