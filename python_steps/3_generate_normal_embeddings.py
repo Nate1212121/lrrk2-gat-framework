@@ -48,6 +48,7 @@ def generate_embeddings(sequences,model_name):
     for protein_id,sequence in tqdm(sequences.items(),desc="Generating embeddings"):
         index=0
         temp_embedding=[]
+        window_sizes=[]
         while index<len(sequence):
             end=index+1022
             if end>len(sequence):
@@ -61,8 +62,14 @@ def generate_embeddings(sequences,model_name):
             last_hidden_state=outputs.last_hidden_state
             embedding=last_hidden_state[0,1:-1].mean(dim=0)
             temp_embedding.append(embedding.cpu())
+            window_sizes.append(len(window))
             index+=511  # sliding window with overlap of 511 amino acids
-        embeddings_map[protein_id]=torch.stack(temp_embedding).mean(dim=0)
+        weights=torch.tensor(window_sizes,dtype=torch.float32)
+        weights=weights/weights.sum()
+        final_embedding=torch.zeros_like(temp_embedding[0])
+        for i, j in zip(weights,temp_embedding):
+            final_embedding+=i*j
+        embeddings_map[protein_id]=final_embedding
     return embeddings_map
 
 print("\nStep 3.3: Generating and saving normal protein embeddings to file")

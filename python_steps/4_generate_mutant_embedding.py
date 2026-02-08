@@ -33,6 +33,7 @@ def generate_embeddings(mutant_sequence,model_name):
     model.eval()
 
     mutant_embedding=[]
+    window_sizes=[]
     index=0
     while index<len(mutant_sequence):
         end=index+1022
@@ -47,9 +48,15 @@ def generate_embeddings(mutant_sequence,model_name):
         last_hidden_state=outputs.last_hidden_state
         embedding=last_hidden_state[0,1:-1].mean(dim=0)
         mutant_embedding.append(embedding.cpu())
+        window_sizes.append(len(window))
         index+=511  # sliding window with overlap of 511 amino acids
-    mutant_embedding=torch.stack(mutant_embedding).mean(dim=0)
-    return mutant_embedding
+    weights=torch.tensor(window_sizes,dtype=torch.float32) #weighted sum averaging to make sure that the average does not get affected by a 100-length window 
+    #(on the end because theres not exactly a multiple of 511 amino acids in every protein) as much as a 511-length one would. esm2 embeddings generally get larger for more amino acids,
+    weights=weights/weights.sum() 
+    final_embedding=torch.zeros_like(mutant_embedding[0])
+    for i, j in zip(weights,mutant_embedding):
+        final_embedding+=i*j
+    return final_embedding
 
 print("\nStep 4.2: Generating and saving mutant LRRK2 G2019S embedding to file")
 if __name__=="__main__":  
