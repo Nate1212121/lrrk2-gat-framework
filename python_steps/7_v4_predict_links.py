@@ -9,6 +9,8 @@ import numpy as np
 from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
 from torch_geometric.nn import GATv2Conv
+from scipy import stats
+from scipy.stats import wilcoxon
 
 print("Step 7: Running GAT and finding differences in normal vs mutant LRRK2")
 
@@ -85,9 +87,10 @@ if __name__=="__main__":
 
     lrrk2_idx=graph_data.protein_to_index['9606.ENSP00000298910']
 
-    source_row=torch.full((graph_data.num_nodes,),fill_value=lrrk2_idx,dtype=torch.long)
     target_row=torch.arange(graph_data.num_nodes,dtype=torch.long)
-
+    mask=target_row!=lrrk2_idx
+    target_row=target_row[mask]
+    source_row=torch.full((len(target_row),),fill_value=lrrk2_idx,dtype=torch.long)
     prediction_edges=torch.stack([source_row,target_row],dim=0)
 
     print("\nStep 7.2: Calculating scores for normal LRRK2")
@@ -113,7 +116,8 @@ if __name__=="__main__":
 
     protein_names=[]
     for i in range(graph_data.num_nodes):
-        protein_names.append(id_dict[i])
+        if i!=lrrk2_idx:
+            protein_names.append(id_dict[i])
     
     results_df=pd.DataFrame()
     results_df['protein_id']=protein_names
@@ -123,3 +127,10 @@ if __name__=="__main__":
 
     results_df=results_df.sort_values(by='final_score',ascending=False)
     results_df.to_csv(results_output_file,index=False)
+
+
+    gof_scores=results_df[results_df['final_score']>0]['final_score']
+    lof_scores=results_df[results_df['final_score']<0]['final_score']
+
+    statistic, p_value=wilcoxon(results_df['final_score'])
+    print(f"\nWilcoxon signed-rank test on final scores: statistic={statistic}, p-value={p_value}")

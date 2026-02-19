@@ -8,6 +8,8 @@ from torch_geometric.transforms import RandomLinkSplit
 import numpy as np
 from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
+from scipy import stats
+from scipy.stats import wilcoxon
 
 print("Step 7: Running GCNs and finding differences in normal vs mutant LRRK2")
 
@@ -114,3 +116,9 @@ if __name__=="__main__":
 
     results_df=results_df.sort_values(by='final_score',ascending=False)
     results_df.to_csv(results_output_file,index=False)
+
+    gof_scores=results_df[results_df['final_score']>0]['final_score']
+    lof_scores=results_df[results_df['final_score']<0]['final_score']
+
+    statistic, p_value=wilcoxon(results_df['final_score'])
+    print(f"\nWilcoxon signed-rank test on final scores: statistic={statistic}, p-value={p_value}")
